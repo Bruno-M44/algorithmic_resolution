@@ -37,7 +37,6 @@ class Actions:
         for iAction in range(len(df) - 1, 1, -1):
             if df.loc[iAction, 500] != df.loc[iAction - 1, 500]:
                 best_combination.append((df.loc[iAction, "action"]))
-        best_combination
 
         end = time.time()
         elapsed = end - start
