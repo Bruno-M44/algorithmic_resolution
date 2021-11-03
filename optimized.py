@@ -1,4 +1,5 @@
 import time
+import datetime
 import pandas as pd
 
 
@@ -8,42 +9,43 @@ class Actions:
 
     def best_result(self):
         start = time.time()
-        # df1 : Dataframe  en entrée
-        # df2 : Dataframe résultats
-        df1 = pd.read_csv(self.input_file, sep=";")
-        df1.columns = ["action", "cost", "profit"]
-        df1["payout"] = ""
-        df1["profit"] = df1["profit"].str.rstrip("%").astype(float) / 100
-        df1["payout"] = df1["profit"] * df1["cost"]
-        df2 = pd.DataFrame(columns=df1.columns)
-        sum_costs = 0
-        while sum_costs <= 500:
-            if len(df1) != 0:
-                while df1.loc[df1["profit"] == df1["profit"].max()]["cost"]. \
-                        values[0] + sum_costs > 500:
-                    df1.drop(
-                        df1.loc[df1["profit"] == df1["profit"].max()].index,
-                        inplace=True)
-                    if len(df1) == 0:
-                        break
-                if len(df1) == 0:
-                    break
-                sum_costs += \
-                    df1.loc[df1["profit"] == df1["profit"].max()][
-                        "cost"].values[0]
-                if sum_costs <= 500:
-                    df2 = pd.concat([df2, df1.loc[
-                        df1["profit"] == df1["profit"].max()].head(1)])
-                    df1.drop(
-                        df1.loc[df1["profit"] == df1["profit"].max()].index,
-                        inplace=True)
+        df = pd.read_csv(self.input_file, sep=";")
+        df.columns = ["action", "cost", "profit"]
+        df = df.sort_values(by="cost", ascending=False).reset_index(
+            drop=True)
+        df = pd.DataFrame([("Aucune action", 0, "0%")],
+                          columns=df.columns).append(df, ignore_index=True)
+        df["payout"] = ""
+        df["profit"] = df["profit"].str.rstrip("%").astype(float) / 100
+        df["payout"] = df["profit"] * df["cost"]
+        pd.DataFrame(["Aucune action", 0, 0])
+        for costs_max in range(500 + 1):
+            df[costs_max] = 0
+
+        for iAction in range(1, len(df)):
+            for costs_max in range(1, 500 + 1):
+                if df.loc[iAction, "cost"] <= costs_max:
+                    df.loc[iAction, costs_max] = max(
+                        df.loc[iAction - 1, costs_max],
+                        df.loc[iAction, "payout"] +
+                        df.loc[
+                            iAction - 1, costs_max - df.loc[iAction, "cost"]])
+                else:
+                    df.loc[iAction, costs_max] = df.loc[iAction - 1, costs_max]
+
+        best_combination = []
+        for iAction in range(len(df) - 1, 1, -1):
+            if df.loc[iAction, 500] != df.loc[iAction - 1, 500]:
+                best_combination.append((df.loc[iAction, "action"]))
+        best_combination
 
         end = time.time()
         elapsed = end - start
         print("La meilleure combinaison est la suivante : ")
-        print(df2["action"].values)
-        print("pour un gain de ", df2["payout"].sum(), " euros")
-        print("Temps de traitement : ", elapsed, "secondes")
+        print(best_combination)
+        print("pour un gain de ", df.iloc[-1][500], " euros")
+        print("Temps de traitement : ", datetime.timedelta(seconds=elapsed))
+        # df.to_csv("df.csv", mode='w+')
 
 
 file = "actions.csv"
