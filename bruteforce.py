@@ -5,10 +5,20 @@ import datetime
 
 
 class Actions:
+    """Class with input the file of actions with the rows name, price, profit.
+    """
     def __init__(self, input_file):
+        """Function of initialization.
+            Parameters
+            ----------
+            input_file : str
+                file name in the repertory.
+        """
         self.input_file = input_file
 
     def best_result(self):
+        """Function to get all solutions and display the best.
+        """
         start = time.time()
         df = pd.read_csv(self.input_file, sep=",")
         df["payout"] = ""
